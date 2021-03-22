@@ -3,7 +3,12 @@ from action_priors.ap.run.online.fruits.RunDQN import RunDQN
 from action_priors.ap.constants import Constants
 from action_priors.ap import constants
 from action_priors.ap.utils.logger import Logger
+from action_priors.ap.hyperparameters import *
+import numpy as np
+import matplotlib.pyplot as plt
 from action_priors.ap import paths
+from datetime import datetime
+import json
 import os
 
 # ex = Experiment("fruits_DQN")
@@ -13,22 +18,51 @@ import os
 #     print("WARNING: results are not being saved. See 'Setup MongoDB' in README.")
 # ex.add_config(paths.CFG_ONLINE_FRUITS_DQN)
 
+def creat_path():
+    save_path = '../../../results/'+'QV_'*qv_learning\
+                +'DQN_'*(not qv_learning)\
+                +'Dueling_'*dueling\
+                +'Double_'*double_learning\
+                +'Prioritized_replay_'*prioritized_replay\
+                +str(goal)+'/'\
+                +datetime.today().strftime('%m.%d.%H:%M:%S')+'/'
+    if not os.path.exists(os.path.dirname(save_path)):
+        try:
+            os.makedirs(os.path.dirname(save_path))
+        except OSError as exc: # Guard against race condition
+            if exc.errno != errno.EEXIST:
+                raise
 
-def main(qv_learning=True, dueling=True, double_learning=True, prioritized_replay=True, prioritized_replay_max_steps=100000, discount=0.9,
-         goal=[0, 1], learning_rate=0.0005, weight_decay=0.00001, batch_size=32, max_steps=100000, max_episodes=None,
-         exploration_steps=80000, buffer_size=100000, target_network=True, target_network_sync=5000, num_fruits=5,
-         policy='EPS', init_tau=1.0, final_tau=0.0, side_transfer=False, side_transfer_last=False,
-         side_encoder_load_path=None, freeze_encoder=False, num_expert_steps=0, num_random_steps=0,
-         num_pretraining_steps=0, load_model_path=None, save_model_path=None, demonstrate_dqn=False, device='cuda:0',
-         encoder_load_path=None):
+    return save_path
 
-    folder_path = "data/fruits_DQN_models"
+def save_all(r_hist, t_hist, path):
+    class NumpyEncoder(json.JSONEncoder):
+        def default(self, obj):
+            if isinstance(obj, np.ndarray):
+                return obj.tolist()
+            return json.JSONEncoder.default(self, obj)
+
+    # with open(os.path.join(save_path, "parameters.json"), 'w') as f:
+    #     json.dump(hyper_parameters, f, cls=NumpyEncoder)
+
+    np.savez(os.path.join(path, 'learning_curve.npy'), rewards=r_hist, episodes=t_hist)
+    plt.plot(t_hist, r_hist)
+    # plt.title(str(alg))
+    plt.xlabel('episodes')
+    plt.ylabel('sucess rate')
+    plt.tight_layout()
+    plt.savefig(os.path.join(path, 'learning_curve.pdf'))
+    plt.close()
+
+def main():
+
+    folder_path = creat_path()
 
     print("{:s} goal".format(str(goal)))
 
-    if not os.path.isdir(folder_path):
-
-        os.makedirs(folder_path)
+    # if not os.path.isdir(folder_path):
+    #
+    #     os.makedirs(folder_path)
 
     model_config = {
         Constants.QV_LEARNING: qv_learning,
@@ -100,6 +134,9 @@ def main(qv_learning=True, dueling=True, double_learning=True, prioritized_repla
 
     if demonstrate_dqn:
         runner.demonstrate_dqn()
+
+    training_result = runner.training_result[Constants.TOTAL_REWARDS]
+    save_all(training_result, np.arange(len(training_result)), folder_path)
 
     # sacred_utils.log_list("total_rewards", runner.training_result[Constants.TOTAL_REWARDS], ex)
     # sacred_utils.log_list("discounted_total_rewards", runner.training_result[Constants.DISCOUNTED_REWARDS], ex)
