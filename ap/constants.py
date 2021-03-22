@@ -5,7 +5,7 @@ from enum import Enum
 # these constants are mostly used in configuration files
 # I create an Enum Constants programatically, so that I can check that each constant is declared only once
 constants = [
-    "STATES", "STATE_LABELS", "ACTIONS", "REWARDS", "QS", "NEXT_STATES", "NEXT_STATE_LABELS",
+    "QV_LEARNING", "STATES", "STATE_LABELS", "ACTIONS", "REWARDS", "QS", "NEXT_STATES", "NEXT_STATE_LABELS",
     "COMMAND", "NUM_EXP", "TIMESTAMP", "INPUT_SIZE", "NEURONS", "USE_BATCH_NORM", "USE_LAYER_NORM",
     "ACTIVATION_LAST", "NUM_COMPONENTS", "NUM_ACTIONS", "BETA", "NO_SAMPLE", "FREEZE_HMM_VAR",
     "FREEZE_HMM_PRIOR", "NO_NEXT_GRAD", "NO_HMM", "USE_SOFTPLUS", "LOAD_PATH", "LATENT_SIZE",

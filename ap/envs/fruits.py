@@ -84,7 +84,7 @@ class Fruits(Env):
     def reset_goal(self):
         # sample a random goal (a set of fruits to pick up)
         # self.goal is a list of indices of the goal fruits
-        num_fruits = np.random.randint(1, self.num_fruits + 1)
+        num_fruits = np.random.randint(1, self.num_fruits + 1)  # ZXP ??? random goal?
         fruits = list(np.random.choice(list(range(self.num_fruits)), size=num_fruits, replace=False))
 
         self.goal = fruits
@@ -117,7 +117,7 @@ class Fruits(Env):
                             else:
                                 negative_reward = True
                         else:
-                            fruit.active = not fruit.active
+                            fruit.active = not fruit.active  # ZXP ??? put the fruit back?
 
         self.current_step += 1
 

@@ -17,6 +17,7 @@ class DQN(nn.Module):
         self.logger = logger
 
         c = config
+        self.qv_learning = c[Constants.QV_LEARNING]
         self.num_actions = c[Constants.NUM_ACTIONS]
         self.dueling = c[Constants.DUELING]
         self.discount = c[Constants.DISCOUNT]
@@ -37,23 +38,32 @@ class DQN(nn.Module):
         else:
             self.fc_q = self.create_normal_head_(self.num_actions)
 
+        if self.qv_learning:
+            self.v_net = self.create_v_head_(self.num_actions)
+
         # setup loss
         self.loss = nn.SmoothL1Loss(reduction="none") # TODO: this might not be exactly huber loss
 
-    def forward(self, x):
+    def forward(self, x, output_v=False):
+        # if qv_learning and output_v, retrun (q, v)
+        # otherwise return q
 
         x = self.encoder(x)
 
         if self.dueling:
-            q = self.get_dueling_q_(x, self.fc_v, self.fc_a)
+            mixed_output = self.get_dueling_q_(x, self.fc_v, self.fc_a)
         else:
-            q = self.fc_q(x)
+            mixed_output = self.fc_q(x)
 
-        return q
+        if self.qv_learning and output_v:
+            v = self.v_net(x)
+            mixed_output = (mixed_output, v)
+
+        return mixed_output
 
     def act(self, state, timestep, evaluation=False):
         # assume the state has a batch size of one
-        with torch.no_grad():
+        with torch.no_grad():  # ZXP NO GRADIENT!!!
             qs = self.forward(state)
 
         qs = qs.cpu().numpy()
@@ -61,17 +71,22 @@ class DQN(nn.Module):
 
         return self.policy.act(state, qs, timestep, evaluation=evaluation)
 
-    def calculate_qs(self, states, actions):
+    def calculate_qs(self, states, actions, output_v=False):
 
-        qs = self.forward(states)
-        qs = qs[list(range(len(actions))), actions.long()]
+        if self.qv_learning and output_v:
+            qs, vs = self.forward(states, output_v=True)
+            mixed_out = qs[list(range(len(actions))), actions.long()]
+            mixed_out = (qs, vs)
+        else:
+            qs = self.forward(states)
+            mixed_out = qs[list(range(len(actions))), actions.long()]
 
-        return qs
+        return mixed_out
 
-    def calculate_td_error_and_loss(self, states, actions, rewards, dones, target_qs, weights=None):
+    def calculate_td_error_and_loss(self, states, actions, rewards, dones, next_s_value, weights=None):
 
         qs = self.calculate_qs(states, actions)
-        target = rewards + self.discount * target_qs * (1 - dones.float())
+        target = rewards + self.discount * next_s_value * (1 - dones.float())
 
         td_error = torch.abs(qs - target)
         loss = self.loss(qs, target)
@@ -138,6 +153,15 @@ class DQN(nn.Module):
         nn.init.constant_(fc_a.bias, 0)
 
         return fc_v, fc_a
+
+    def create_v_head_(self, num_actions):
+
+        v_net = nn.Linear(self.encoder.output_size, 1, bias=True)
+
+        nn.init.kaiming_normal_(v_net.weight, mode="fan_in", nonlinearity="relu")
+        nn.init.constant_(v_net.bias, 0)
+
+        return v_net
 
     def setup_replay_buffer_(self):
 

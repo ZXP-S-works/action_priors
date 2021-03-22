@@ -14,7 +14,7 @@ import os
 # ex.add_config(paths.CFG_ONLINE_FRUITS_DQN)
 
 
-def main(dueling=True, double_learning=True, prioritized_replay=True, prioritized_replay_max_steps=100000, discount=0.9,
+def main(qv_learning=True, dueling=True, double_learning=True, prioritized_replay=True, prioritized_replay_max_steps=100000, discount=0.9,
          goal=[0, 1], learning_rate=0.0005, weight_decay=0.00001, batch_size=32, max_steps=100000, max_episodes=None,
          exploration_steps=80000, buffer_size=100000, target_network=True, target_network_sync=5000, num_fruits=5,
          policy='EPS', init_tau=1.0, final_tau=0.0, side_transfer=False, side_transfer_last=False,
@@ -31,6 +31,7 @@ def main(dueling=True, double_learning=True, prioritized_replay=True, prioritize
         os.makedirs(folder_path)
 
     model_config = {
+        Constants.QV_LEARNING: qv_learning,
         Constants.NUM_ACTIONS: 25,
         Constants.DUELING: dueling,
         Constants.PRIORITIZED_REPLAY: prioritized_replay,
@@ -43,6 +44,7 @@ def main(dueling=True, double_learning=True, prioritized_replay=True, prioritize
     }
 
     runner_config = {
+        Constants.QV_LEARNING: qv_learning,
         Constants.DOUBLE_LEARNING: double_learning,
         Constants.LEARNING_RATE: learning_rate,
         Constants.WEIGHT_DECAY: weight_decay,

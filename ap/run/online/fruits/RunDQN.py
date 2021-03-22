@@ -29,6 +29,7 @@ class RunDQN:
         self.logger = logger
 
         rc = runner_config
+        self.qv_learning = rc[Constants.QV_LEARNING]
         self.goal = rc[Constants.GOAL]
         self.learning_rate = rc[Constants.LEARNING_RATE]
         self.weight_decay = rc[Constants.WEIGHT_DECAY]
@@ -263,21 +264,25 @@ class RunDQN:
         weights = runner_utils.other_to_torch(weights, self.device)
 
         with torch.no_grad():
-            target_next_qs = self.target_dqn(next_states)
+            target_next_s_value = self.target_dqn(next_states, self.qv_learning)
 
-        if self.double_learning:
-            with torch.no_grad():
-                policy_next_qs = self.dqn(next_states)
-            next_actions = policy_next_qs.argmax(1)
+        if self.qv_learning:
+            _, next_s_value = target_next_s_value
+            next_s_value = next_s_value.squeeze()
         else:
-            next_actions = target_next_qs.argmax(1)
+            if self.double_learning:
+                with torch.no_grad():
+                    policy_next_s_value = self.dqn(next_states)
+                next_actions = policy_next_s_value.argmax(1)
+            else:
+                next_actions = target_next_s_value.argmax(1)
 
-        next_actions = next_actions.type(torch.long)
-        tmp = torch.arange(next_actions.size()[0], dtype=torch.long, device=self.device)
-        next_qs = target_next_qs[tmp, next_actions]
+            next_actions = next_actions.type(torch.long)
+            tmp = torch.arange(next_actions.size()[0], dtype=torch.long, device=self.device)
+            next_s_value = target_next_s_value[tmp, next_actions]
 
         opt.zero_grad()
-        td_error, loss = self.dqn.calculate_td_error_and_loss(states, actions, rewards, dones, next_qs, weights=weights)
+        td_error, loss = self.dqn.calculate_td_error_and_loss(states, actions, rewards, dones, next_s_value, weights=weights)
         loss.backward()
         opt.step()
 
