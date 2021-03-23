@@ -75,7 +75,8 @@ class DQN(nn.Module):
 
         if self.qv_learning and output_v:
             qs, vs = self.forward(states, output_v=True)
-            mixed_out = qs[list(range(len(actions))), actions.long()]
+            qs = qs[list(range(len(actions))), actions.long()]
+            vs = vs.squeeze()
             mixed_out = (qs, vs)
         else:
             qs = self.forward(states)
@@ -85,11 +86,17 @@ class DQN(nn.Module):
 
     def calculate_td_error_and_loss(self, states, actions, rewards, dones, next_s_value, weights=None):
 
-        qs = self.calculate_qs(states, actions)
+        mixed_out = self.calculate_qs(states, actions, self.qv_learning)
         target = rewards + self.discount * next_s_value * (1 - dones.float())
 
+        if self.qv_learning:
+            qs, vs = mixed_out
+            loss = self.loss(qs, target) + self.loss(vs, target)
+        else:
+            qs = mixed_out
+            loss = self.loss(qs, target)
+
         td_error = torch.abs(qs - target)
-        loss = self.loss(qs, target)
 
         if weights is None:
             loss = torch.mean(loss)

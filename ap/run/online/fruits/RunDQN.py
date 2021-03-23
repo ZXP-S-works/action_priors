@@ -40,6 +40,7 @@ class RunDQN:
         self.max_steps = rc[Constants.MAX_STEPS]
         self.max_episodes = rc[Constants.MAX_EPISODES]
         self.num_fruits = rc[Constants.NUM_FRUITS]
+        self.size = rc[Constants.ENV_SIZE]
         self.device = rc[Constants.DEVICE]
         self.policy_type = rc[Constants.POLICY]
         self.side_transfer = rc[Constants.SIDE_TRANSFER]
@@ -333,7 +334,7 @@ class RunDQN:
 
     def build_env_(self):
 
-        self.env = Fruits(num_fruits=self.num_fruits, no_start=True, max_steps=30, no_wrong_pick=True)
+        self.env = Fruits(num_fruits=self.num_fruits, size=self.size, no_start=True, max_steps=30, no_wrong_pick=True)
 
         if self.goal is not None:
             self.env.goal = self.goal

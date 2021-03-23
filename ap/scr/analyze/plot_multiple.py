@@ -178,7 +178,7 @@ def plotLearningCurve(base, ep=50000, use_default_cm=False, filer_pass_word='_',
 
     # plt.legend(loc=0, facecolor='w', fontsize='x-large')
     plt.legend(loc=4, facecolor='w', fontsize=LEGEND_SIZE)
-    plt.xlabel('number of episodes (k)')
+    plt.xlabel('number of episodes')
     plt.ylabel('task success rate')
     # plt.ylim((-0.01, 1.01))
     # plt.yticks(np.arange(0., 1.05, 0.1))

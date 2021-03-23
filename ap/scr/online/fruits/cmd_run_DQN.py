@@ -66,7 +66,7 @@ def main():
 
     model_config = {
         Constants.QV_LEARNING: qv_learning,
-        Constants.NUM_ACTIONS: 25,
+        Constants.NUM_ACTIONS: 10 * env_size ** 2,
         Constants.DUELING: dueling,
         Constants.PRIORITIZED_REPLAY: prioritized_replay,
         Constants.DISCOUNT: discount,
@@ -89,6 +89,7 @@ def main():
         Constants.MAX_EPISODES: max_episodes,
         Constants.TARGET_NETWORK: target_network,
         Constants.TARGET_NETWORK_SYNC: target_network_sync,
+        Constants.ENV_SIZE: env_size,
         Constants.NUM_FRUITS: num_fruits,
         Constants.POLICY: Constants(policy),
         Constants.SIDE_TRANSFER: side_transfer,
