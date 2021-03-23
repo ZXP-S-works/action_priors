@@ -92,7 +92,7 @@ class Fruits(Env):
     def step(self, action):
         # execute a step in the env given an action
         num_actions = self.size ** 2
-        action = action // num_actions
+        action = action % num_actions
         # assert 0 <= action < num_actions
         reached_goal = False
         done = False

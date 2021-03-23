@@ -66,7 +66,7 @@ def main():
 
     model_config = {
         Constants.QV_LEARNING: qv_learning,
-        Constants.NUM_ACTIONS: 10 * env_size ** 2,
+        Constants.NUM_ACTIONS: num_actions_x * env_size ** 2,
         Constants.DUELING: dueling,
         Constants.PRIORITIZED_REPLAY: prioritized_replay,
         Constants.DISCOUNT: discount,
@@ -96,6 +96,19 @@ def main():
         Constants.FREEZE_ENCODER: freeze_encoder,
         Constants.SIDE_TRANSFER_LAST: side_transfer_last
     }
+
+    dic_runner_config = {}
+    for key in runner_config.keys():
+        dic_runner_config[str(key)] = str(runner_config[key])
+    dic_model_config = {}
+    for key in model_config.keys():
+        dic_model_config[str(key)] = str(model_config[key])
+    json_data = {
+        'runner_config': dic_runner_config,
+        'model_config': dic_model_config
+    }
+    with open(os.path.join(folder_path, "parameters.json"), 'w') as f:
+        json.dump(json_data, f, indent=2)
 
     logger = Logger(save_file=None, print_logs=True)
 
