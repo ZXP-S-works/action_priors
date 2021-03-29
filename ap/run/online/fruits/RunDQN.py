@@ -289,8 +289,11 @@ class RunDQN:
             if self.qv_eps:
                 eps = (final_eps - init_eps) * step / self.model_config[Constants.EXPLORATION_STEPS] +\
                       init_eps
-                next_s_value = (1 - eps) * self.next_vs_value(target_next_s_value) +\
-                               eps * self.next_qs_value(next_states, target_next_s_value[0])
+                eps = max(eps, final_eps)
+                next_s_value_for_q = (1 - eps) * self.next_vs_value(target_next_s_value) +\
+                                     eps * self.next_qs_value(next_states, target_next_s_value[0])
+                next_s_value_for_v = self.next_vs_value(target_next_s_value)
+                next_s_value = (next_s_value_for_q, next_s_value_for_v)
             else:
                 next_s_value = self.next_vs_value(target_next_s_value)
         else:

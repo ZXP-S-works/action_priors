@@ -243,6 +243,6 @@ def showPerformance(base):
 
 if __name__ == '__main__':
     base = '../../results'
-    for goal in ['[0, 1]']:
-        plotLearningCurve(base, 100000, filer_pass_word='_'+str(goal), figname='5x5x6 a50 [0, 1] exp20k')
+    for goal in ['[0, 1, 2]']:
+        plotLearningCurve(base, 100000, filer_pass_word='_'+str(goal), figname='5x5x6 a125 [0, 1, 2] exp50k eps no pdd')
     # showPerformance(base)

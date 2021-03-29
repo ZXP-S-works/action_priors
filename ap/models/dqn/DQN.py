@@ -87,11 +87,18 @@ class DQN(nn.Module):
     def calculate_td_error_and_loss(self, states, actions, rewards, dones, next_s_value, weights=None):
 
         mixed_out = self.calculate_qs(states, actions, self.qv_learning)
+        if type(next_s_value) == tuple:
+            next_s_value, next_s_value_for_v = next_s_value
+            target_for_v = rewards + self.discount * next_s_value_for_v * (1 - dones.float())
+
         target = rewards + self.discount * next_s_value * (1 - dones.float())
 
         if self.qv_learning:
             qs, vs = mixed_out
-            loss = self.loss(qs, target) + self.loss(vs, target)
+            if type(next_s_value) == tuple:
+                loss = self.loss(qs, target) + self.loss(vs, target_for_v)
+            else:
+                loss = self.loss(qs, target) + self.loss(vs, target)
         else:
             qs = mixed_out
             loss = self.loss(qs, target)
