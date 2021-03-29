@@ -1,6 +1,7 @@
 import numpy as np
 from ...models.dqn.utils.schedules import LinearSchedule
 from ...constants import Constants
+from ...hyperparameters import *
 
 
 class EpsGreedyPolicy:
@@ -10,8 +11,8 @@ class EpsGreedyPolicy:
         self.exploration_steps = config[Constants.EXPLORATION_STEPS]
         self.num_actions = config[Constants.NUM_ACTIONS]
 
-        self.init_explore = 1.0
-        self.final_explore = 0.1
+        self.init_explore = init_eps
+        self.final_explore = final_eps
 
         self.exploration_schedule = None
         self.reset()

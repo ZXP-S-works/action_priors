@@ -16,6 +16,7 @@ from ....utils.dataset import ListDataset
 from ....utils import runner as runner_utils
 from ....utils.policy.EpsGreedyPolicy import EpsGreedyPolicy
 from ....utils.policy.SoftmaxPolicy import SoftmaxPolicy
+from ....hyperparameters import *
 
 
 class RunDQN:
@@ -30,6 +31,7 @@ class RunDQN:
 
         rc = runner_config
         self.qv_learning = rc[Constants.QV_LEARNING]
+        self.qv_eps = rc[Constants.QV_EPS]
         self.goal = rc[Constants.GOAL]
         self.learning_rate = rc[Constants.LEARNING_RATE]
         self.weight_decay = rc[Constants.WEIGHT_DECAY]
@@ -252,6 +254,22 @@ class RunDQN:
             if done:
                 state = self.env.reset()
 
+    def next_vs_value(self, target_next_s_value):
+            _, next_s_value = target_next_s_value
+            return next_s_value.squeeze()
+
+    def next_qs_value(self, next_states, target_next_s_value):
+            if self.double_learning:
+                with torch.no_grad():
+                    policy_next_s_value = self.dqn(next_states)
+                next_actions = policy_next_s_value.argmax(1)
+            else:
+                next_actions = target_next_s_value.argmax(1)
+
+            next_actions = next_actions.type(torch.long)
+            tmp = torch.arange(next_actions.size()[0], dtype=torch.long, device=self.device)
+            return target_next_s_value[tmp, next_actions]
+
     def learn_step_(self, opt, step):
 
         states, actions, rewards, next_states, dones, weights, batch_indexes = \
@@ -268,19 +286,15 @@ class RunDQN:
             target_next_s_value = self.target_dqn(next_states, self.qv_learning)
 
         if self.qv_learning:
-            _, next_s_value = target_next_s_value
-            next_s_value = next_s_value.squeeze()
-        else:
-            if self.double_learning:
-                with torch.no_grad():
-                    policy_next_s_value = self.dqn(next_states)
-                next_actions = policy_next_s_value.argmax(1)
+            if self.qv_eps:
+                eps = (final_eps - init_eps) * step / self.model_config[Constants.EXPLORATION_STEPS] +\
+                      init_eps
+                next_s_value = (1 - eps) * self.next_vs_value(target_next_s_value) +\
+                               eps * self.next_qs_value(next_states, target_next_s_value[0])
             else:
-                next_actions = target_next_s_value.argmax(1)
-
-            next_actions = next_actions.type(torch.long)
-            tmp = torch.arange(next_actions.size()[0], dtype=torch.long, device=self.device)
-            next_s_value = target_next_s_value[tmp, next_actions]
+                next_s_value = self.next_vs_value(target_next_s_value)
+        else:
+            next_s_value = self.next_qs_value(next_states, target_next_s_value)
 
         opt.zero_grad()
         td_error, loss = self.dqn.calculate_td_error_and_loss(states, actions, rewards, dones, next_s_value, weights=weights)

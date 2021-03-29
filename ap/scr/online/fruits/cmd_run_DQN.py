@@ -20,6 +20,7 @@ import os
 
 def creat_path():
     save_path = '../../../results/'+'QV_'*qv_learning\
+                +'eps_'*qv_eps\
                 +'DQN_'*(not qv_learning)\
                 +'Dueling_'*dueling\
                 +'Double_'*double_learning\
@@ -79,6 +80,7 @@ def main():
 
     runner_config = {
         Constants.QV_LEARNING: qv_learning,
+        Constants.QV_EPS: qv_eps,
         Constants.DOUBLE_LEARNING: double_learning,
         Constants.LEARNING_RATE: learning_rate,
         Constants.WEIGHT_DECAY: weight_decay,
